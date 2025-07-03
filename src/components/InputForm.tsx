@@ -1,8 +1,10 @@
 import React, { useState, useEffect } from 'react';
+
+import { getLLMConfig } from '../config';
 import { extractFlashcards } from '../services/llmService';
 import { fetchWikipediaContent } from '../services/wikipediaService';
 import { FlashcardSet } from '../types';
-import { getLLMConfig } from '../config';
+
 import { MockModeToggle } from './MockModeToggle';
 import '../styles/InputForm.css';
 
@@ -16,14 +18,13 @@ const InputForm: React.FC<InputFormProps> = ({ setFlashcardSet, setLoading, setE
   const [isUrlInput, setIsUrlInput] = useState(true);
   const [input, setInput] = useState('');
   const [useMockMode, setUseMockMode] = useState(false);
-  
+
   useEffect(() => {
     const savedSetting = localStorage.getItem('use_mock_mode');
     if (savedSetting) {
       setUseMockMode(savedSetting === 'true');
     }
   }, []);
-
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -35,7 +36,7 @@ const InputForm: React.FC<InputFormProps> = ({ setFlashcardSet, setLoading, setE
     }
 
     const config = getLLMConfig();
-    
+
     if (!config.defaultApiKey || !config.defaultApiKey.trim()) {
       setError('Please set your API key in LLM Settings');
       return;
@@ -63,9 +64,9 @@ const InputForm: React.FC<InputFormProps> = ({ setFlashcardSet, setLoading, setE
 
       setFlashcardSet({
         title: isUrlInput ? extractTitleFromUrl(input) : 'Custom Text Flashcards',
-        source: source,
+        source,
         cards: flashcards,
-        createdAt: new Date()
+        createdAt: new Date(),
       });
     } catch (error) {
       setError(`Error: ${error instanceof Error ? error.message : 'Unknown error occurred'}`);
@@ -132,7 +133,7 @@ const InputForm: React.FC<InputFormProps> = ({ setFlashcardSet, setLoading, setE
         </div>
 
         <MockModeToggle onChange={setUseMockMode} />
-        
+
         <button className="submit-button" type="submit">Generate Flashcards</button>
       </form>
     </div>

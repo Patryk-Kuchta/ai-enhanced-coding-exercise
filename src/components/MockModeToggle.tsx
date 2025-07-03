@@ -15,7 +15,7 @@ export const MockModeToggle: React.FC<MockModeToggleProps> = ({ onChange }) => {
     }
   }, []);
 
-  const handleToggle = () => {
+  const handleToggle = (): void => {
     const newValue = !useMock;
     setUseMock(newValue);
     localStorage.setItem('use_mock_mode', String(newValue));
@@ -30,14 +30,14 @@ export const MockModeToggle: React.FC<MockModeToggleProps> = ({ onChange }) => {
           checked={useMock}
           onChange={handleToggle}
         />
-        <span className="toggle-slider"></span>
+        <span className="toggle-slider" />
       </label>
       <span className="toggle-label">
         {useMock ? '🚀 Fast Mock Mode' : '🤖 Real LLM Mode'}
       </span>
       <div className="toggle-tooltip">
-        {useMock 
-          ? 'Using mock responses (fast, no API calls)' 
+        {useMock
+          ? 'Using mock responses (fast, no API calls)'
           : 'Using real AI calls (will be slower)'}
       </div>
     </div>
