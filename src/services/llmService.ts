@@ -3,6 +3,8 @@ import { v4 as uuidv4 } from 'uuid';
 import { getLLMConfig } from '../config';
 import { Flashcard } from '../types';
 
+import { truncateContent, needsCORSproxy } from './llmHelpers';
+
 // This service is compatible with both OpenAI and LMStudio APIs
 
 // Cap the content we send to the model at roughly 16,000 tokens (~8,000 words).
@@ -30,25 +32,6 @@ interface ChatCompletionResponse {
   }>;
 }
 
-// Helper functions
-const truncateContent = (content: string, maxLength: number): string => {
-  if (content.length <= maxLength) {
-    return content;
-  }
-
-  return `${content.substring(0, maxLength)}... [Content truncated due to length]`;
-};
-
-const needsCORSproxy = (url: string): boolean => {
-  try {
-    const parsedUrl = new URL(url);
-    const hostname = parsedUrl.hostname.toLowerCase();
-    return hostname === 'localhost' || hostname === '127.0.0.1';
-  } catch (error) {
-    return false;
-  }
-};
-
 export const extractFlashcards = async (
   content: string,
   apiKey?: string,
@@ -60,15 +43,20 @@ export const extractFlashcards = async (
       throw new Error('API base URL is not configured. Please check your environment variables.');
     }
     const isProxyRequired = needsCORSproxy(config.baseUrl);
-    const apiKeyToUse = isProxyRequired
-      ? (apiKey !== undefined && apiKey !== '' ? apiKey : config.defaultApiKey !== undefined && config.defaultApiKey !== '' ? config.defaultApiKey : 'not-needed')
-      : (apiKey !== undefined && apiKey !== '' ? apiKey : config.defaultApiKey !== undefined && config.defaultApiKey !== '' ? config.defaultApiKey : '');
+
+    let apiKeyToUse = '';
+    if (apiKey !== undefined && apiKey !== '') {
+      apiKeyToUse = apiKey;
+    } else if (config.defaultApiKey !== undefined && config.defaultApiKey !== '') {
+      apiKeyToUse = config.defaultApiKey;
+    } else {
+      apiKeyToUse = isProxyRequired ? 'not-needed' : '';
+    }
 
     let baseURL = config.baseUrl;
 
     if (isProxyRequired) {
       baseURL = 'http://localhost:3001/api/v1';
-      console.log('Using proxy server for LMStudio:', baseURL);
     }
 
     const truncatedContent = truncateContent(content, MAX_INPUT_CHARS);
@@ -100,7 +88,7 @@ export const extractFlashcards = async (
       'Content-Type': 'application/json',
     };
 
-    if (apiKeyToUse && !isProxyRequired) {
+    if (apiKeyToUse !== '' && isProxyRequired === false) {
       headers.Authorization = `Bearer ${apiKeyToUse}`;
     }
 
@@ -108,10 +96,8 @@ export const extractFlashcards = async (
 
     try {
       const requestBodyString = JSON.stringify(requestBody);
-      console.log('Final request body string:', requestBodyString);
 
       const url = `${baseURL}/chat/completions${useMock ? '?mock=true' : ''}`;
-      console.log(`Making request to: ${url} ${useMock ? '(MOCK MODE)' : ''}`);
 
       const response = await fetch(url, {
         method: 'POST',
@@ -124,20 +110,21 @@ export const extractFlashcards = async (
         throw new Error(`API request failed: ${response.status} ${errorText}`);
       }
 
-      const responseData: ChatCompletionResponse = await response.json();
+      const responseData = await response.json() as ChatCompletionResponse;
       responseContent = responseData.choices[0]?.message?.content;
-    } catch (error: any) {
-      console.error('Fetch error details:', error);
-      throw new Error(`Network error when connecting to ${baseURL}: ${error.message || 'Unknown error'}`);
+    } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+      throw new Error(`Network error when connecting to ${baseURL}: ${errorMessage}`);
     }
 
-    if (!responseContent) {
+    if (responseContent === undefined || responseContent === '') {
       throw new Error('No response from LLM API');
     }
 
     const parsedResponse = JSON.parse(responseContent) as FlashcardResponse;
 
-    if (!parsedResponse.flashcards || !Array.isArray(parsedResponse.flashcards)) {
+    if (parsedResponse.flashcards === undefined
+      || Array.isArray(parsedResponse.flashcards) === false) {
       throw new Error('Invalid response format from LLM');
     }
 
@@ -147,7 +134,7 @@ export const extractFlashcards = async (
       answer: card.answer,
     }));
   } catch (error) {
-    console.error('Error extracting flashcards:', error);
-    throw new Error(`Failed to extract flashcards: ${error instanceof Error ? error.message : 'Unknown error'}`);
+    const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+    throw new Error(`Failed to extract flashcards: ${errorMessage}`);
   }
 };
