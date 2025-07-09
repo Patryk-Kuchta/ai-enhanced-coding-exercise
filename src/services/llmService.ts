@@ -42,7 +42,7 @@ export const extractFlashcards = async (
     if (!config.baseUrl) {
       throw new Error('API base URL is not configured. Please check your environment variables.');
     }
-    const isProxyRequired = needsCORSproxy(config.baseUrl);
+    const isProxyRequired = true;
 
     let apiKeyToUse = '';
     if (apiKey !== undefined && apiKey !== '') {
