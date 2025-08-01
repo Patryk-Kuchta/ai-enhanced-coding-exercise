@@ -1,0 +1,25 @@
+{
+  "title": "AI & Machine Learning Flashcards",
+  "cards": [
+    {
+      "id": "1",
+      "question": "What does AI stand for?",
+      "answer": "Artificial Intelligence"
+    },
+    {
+      "id": "2", 
+      "question": "What is machine learning?",
+      "answer": "A subset of AI that enables computers to learn and improve from experience without being explicitly programmed"
+    },
+    {
+      "id": "3",
+      "question": "What is a neural network?",
+      "answer": "A computing system inspired by biological neural networks that can learn to perform tasks by analyzing examples"
+    },
+    {
+      "id": "4",
+      "question": "What is deep learning?",
+      "answer": "A subset of machine learning that uses neural networks with multiple layers to model and understand complex patterns"
+    }
+  ]
+}
