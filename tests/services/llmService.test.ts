@@ -24,7 +24,8 @@ describe('LLM Service', () => {
   const mockApiKey = 'test-api-key';
   
   // Create a long content string for truncation tests
-  const longContent = 'A'.repeat(5000);
+  // Must exceed the ~16,000-token (~64,000-char) input cap so truncation kicks in
+  const longContent = 'A'.repeat(70000);
 
   beforeEach(() => {
     jest.clearAllMocks();

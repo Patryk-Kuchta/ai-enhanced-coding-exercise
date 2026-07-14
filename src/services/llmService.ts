@@ -4,6 +4,11 @@ import { getLLMConfig } from '../config';
 
 // This service is compatible with both OpenAI and LMStudio APIs
 
+// Cap the content we send to the model at roughly 16,000 tokens (~8,000 words).
+// truncateContent works on characters, so convert using ~4 characters per token.
+const MAX_INPUT_TOKENS = 16000;
+const MAX_INPUT_CHARS = MAX_INPUT_TOKENS * 4;
+
 type ChatMessage = {
   role: 'system' | 'user' | 'assistant';
   content: string;
@@ -46,7 +51,7 @@ export const extractFlashcards = async (
       console.log('Using proxy server for LMStudio:', baseURL);
     }
     
-    const truncatedContent = truncateContent(content, 3000);
+    const truncatedContent = truncateContent(content, MAX_INPUT_CHARS);
 
     const messages: ChatMessage[] = [
       {
